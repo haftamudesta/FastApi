@@ -4,7 +4,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplat
 from langchain_core.output_parsers import PydanticOutputParser
 from core.prompts import STORY_PROMPT
-from models.story import Story
+from models.story import Story, StoryNode
 from core.models import StoryLLMResponse, StoryNodeLLM
 
 
@@ -39,5 +39,37 @@ class StoryGenerator:
         root_node_data = story_structure.rootNode
         if isinstance(root_node_data, dict):
             root_node_data = StoryNodeLLM.model_validate(root_node_data)
+            cls._process_story_node(
+                db, story_db.id, root_node_data, is_root=True)
         db.commit()
         return story_db
+
+    @classmethod
+    def _process_story_node(cls, db: Session, story_id: int, node_data: StoryNodeLLM, is_root: bool = False) -> StoryNode:
+        node = StoryNode(
+            story_id=story_id,
+            content=node_data.content if hasattr(
+                node_data, "content") else node_data["content"],
+            is_root=is_root,
+            is_ending=node_data.isEnding if hasattr(
+                node_data, "isEnding") else node_data["isEnding"],
+            is_winning_ending=node_data.isWinningEnding if hasattr(
+                node_data, "isWinningEnding") else node_data["isWinningEnding"],
+            options=[])
+        db.add(node)
+        db.flush()
+        if not node.is_ending and (hasattr(node_data, "options") and node_data.options):
+            options_list = []
+            for option_data in node.options:
+                next_node = option_data.nextNode
+                if isinstance(next_node, dict):
+                    next_node = StoryNodeLLM.model_validate(next_node)
+                child_node = cls._process_story_node(
+                    db, story_id, next_node, is_root=False)
+                options_list.append({
+                    "text": option_data.text,
+                    "node_id": child_node.id
+                })
+            node_options = options_list
+        db.flush()
+        return node
