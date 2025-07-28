@@ -11,5 +11,4 @@ const LoadingStatus = ({theme}) => {
     </div>
   )
 }
-
 export default LoadingStatus

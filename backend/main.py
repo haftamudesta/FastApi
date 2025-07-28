@@ -8,7 +8,7 @@ create_tables()
 
 app = FastAPI(
     title="Choose your own adventure Game API",
-    description="Api to generate coole stories",
+    description="Api to generate Cool Stories",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redocs"

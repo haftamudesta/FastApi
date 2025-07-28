@@ -1,12 +1,17 @@
-
+import { BrowserRouter,Routes,Route,Router } from 'react-router-dom'
 import './App.css'
+import StoryLoader from './components/StoryLoader'
 
 function App() {
   
-
   return (
     <>
-      <h1>Game</h1>
+      <header>Interactive Story Generator</header>
+      <main>
+        <Routes>
+          <Route path={'/story/:id'} element={<StoryLoader />} />
+        </Routes>
+      </main>
     </>
   )
 }
